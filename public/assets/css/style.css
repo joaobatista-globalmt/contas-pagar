@@ -1,0 +1,274 @@
+/* /home/sistema/contas-pagar/public/assets/css/style.css */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, sans-serif;
+    background: #f5f7fa;
+    color: #2c3e50;
+    line-height: 1.5;
+}
+
+a { color: #2980b9; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* === LOGIN === */
+.login-body {
+    background: linear-gradient(135deg, #2980b9 0%, #2c3e50 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.login-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    padding: 40px;
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-card h1 { font-size: 28px; margin-bottom: 8px; color: #2c3e50; }
+.login-card .subtitle { color: #7f8c8d; margin-bottom: 24px; font-size: 14px; }
+
+.login-card form label {
+    display: block;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #34495e;
+    font-weight: 600;
+}
+
+.login-card input {
+    width: 100%;
+    padding: 10px 12px;
+    margin-top: 6px;
+    border: 1px solid #bdc3c7;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.login-card input:focus { outline: none; border-color: #2980b9; }
+
+.login-hint { text-align: center; margin-top: 16px; color: #95a5a6; }
+
+/* === TOPBAR === */
+.topbar {
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    height: 60px;
+}
+
+.topbar-left .logo { font-weight: 700; font-size: 18px; color: #2c3e50; }
+.topbar-left .logo:hover { text-decoration: none; }
+
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+
+.empresa-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #7f8c8d;
+}
+
+.empresa-selector select {
+    padding: 6px 8px;
+    border: 1px solid #bdc3c7;
+    border-radius: 4px;
+    font-size: 13px;
+    background: white;
+}
+
+.user-info { font-size: 13px; color: #34495e; }
+
+.btn-sair {
+    background: #e74c3c;
+    color: white !important;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.btn-sair:hover { background: #c0392b; text-decoration: none; }
+
+/* === SIDEBAR === */
+.sidebar {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    bottom: 0;
+    width: 220px;
+    background: white;
+    border-right: 1px solid #ecf0f1;
+    padding: 20px 0;
+    overflow-y: auto;
+}
+
+.sidebar nav a {
+    display: block;
+    padding: 12px 24px;
+    color: #34495e;
+    font-size: 14px;
+    border-left: 3px solid transparent;
+}
+
+.sidebar nav a:hover { background: #ecf0f1; text-decoration: none; }
+
+.sidebar nav a.active {
+    background: #ecf0f1;
+    border-left-color: #2980b9;
+    color: #2980b9;
+    font-weight: 600;
+}
+
+.sidebar hr { margin: 12px 24px; border: 0; border-top: 1px solid #ecf0f1; }
+
+/* === CONTENT === */
+.content {
+    margin-left: 220px;
+    margin-top: 60px;
+    padding: 30px;
+    min-height: calc(100vh - 60px);
+}
+
+.content h1 { margin-bottom: 8px; font-size: 24px; color: #2c3e50; }
+.content h2 { margin: 24px 0 12px; font-size: 18px; color: #34495e; }
+
+.empresa-atual { color: #7f8c8d; font-size: 13px; margin-bottom: 24px; }
+
+.footer {
+    margin-left: 220px;
+    padding: 16px 30px;
+    background: #ecf0f1;
+    color: #95a5a6;
+    text-align: center;
+    font-size: 12px;
+}
+
+/* === CARDS === */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border-left: 4px solid #2980b9;
+}
+
+.card h3 { font-size: 13px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 8px; }
+.card-valor { font-size: 24px; font-weight: 700; color: #2c3e50; }
+.card-info { font-size: 12px; color: #95a5a6; margin-top: 4px; }
+
+.card-azul     { border-left-color: #3498db; }
+.card-amarelo  { border-left-color: #f1c40f; }
+.card-verde    { border-left-color: #27ae60; }
+.card-vermelho { border-left-color: #e74c3c; }
+
+/* === TABELAS === */
+.tabela {
+    width: 100%;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border-collapse: collapse;
+}
+
+.tabela thead {
+    background: #ecf0f1;
+}
+
+.tabela th {
+    padding: 12px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #34495e;
+    text-transform: uppercase;
+}
+
+.tabela td {
+    padding: 12px;
+    border-top: 1px solid #ecf0f1;
+    font-size: 14px;
+}
+
+.tabela tbody tr:hover { background: #f8f9fa; }
+
+.td-valor { text-align: right; font-weight: 600; }
+
+/* === BADGES === */
+.badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.badge-vermelho { background: #e74c3c; color: white; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+
+/* === GRIDS === */
+.grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 900px) {
+    .grid-2col { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .content { margin-left: 0; }
+    .footer { margin-left: 0; }
+}
+
+/* === BOTOES === */
+.btn {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+    background: #ecf0f1;
+    color: #34495e;
+}
+
+.btn:hover { background: #bdc3c7; text-decoration: none; }
+
+.btn-primario { background: #2980b9; color: white; }
+.btn-primario:hover { background: #1f6391; }
+.btn-verde { background: #27ae60; color: white; }
+.btn-vermelho { background: #e74c3c; color: white; }
+.btn-bloco { width: 100%; padding: 12px; font-size: 16px; }
+
+/* === ALERTAS === */
+.alert {
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+}
+
+.alert-error { background: #fde8e8; color: #c0392b; border: 1px solid #e74c3c; }
+.alert-success { background: #e8f8f0; color: #1e8449; border: 1px solid #27ae60; }
+
+.vazio { color: #95a5a6; font-style: italic; padding: 20px; text-align: center; }
