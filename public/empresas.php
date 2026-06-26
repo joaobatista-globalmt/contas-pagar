@@ -41,24 +41,24 @@ require_once __DIR__ . '/../src/views/layout/header.php';
             <td><?= htmlspecialchars($e['cnpj'] ?? '-') ?></td>
             <td><?= htmlspecialchars(($e['cidade'] ?? '-') . '/' . ($e['uf'] ?? '-')) ?></td>
             <td>
-                <?php if ($e['ativo']): ?>
+                <?php if ($e['ativo'] ?? 0): ?>
                     <span class="badge badge-verde">Ativa</span>
                 <?php else: ?>
                     <span class="badge badge-cinza">Inativa</span>
                 <?php endif; ?>
             </td>
             <td>
-                <a href="<?= BASE_URL ?>/empresa_form.php?id=<?= $e['id'] ?>" class="btn btn-pequeno">Editar</a>
-                <?php if ($e['ativo'] && $e['id'] != Auth::empresaAtualId()): ?>
+                <a href="<?= BASE_URL ?>/empresa_form.php?id=<?= $e['id'] ?? 0 ?>" class="btn btn-pequeno">Editar</a>
+                <?php if (($e['ativo'] ?? 0) && ($e['id'] ?? 0) != Auth::empresaAtualId()): ?>
                     <form method="POST" action="<?= BASE_URL ?>/empresa_acao.php" style="display:inline">
                         <input type="hidden" name="acao" value="desativar">
-                        <input type="hidden" name="id" value="<?= $e['id'] ?>">
+                        <input type="hidden" name="id" value="<?= $e['id'] ?? 0 ?>">
                         <button type="submit" class="btn btn-pequeno btn-vermelho" onclick="return confirm('Desativar esta empresa?')">Desativar</button>
                     </form>
-                <?php elseif (!$e['ativo']): ?>
+                <?php elseif (!($e['ativo'] ?? 0)): ?>
                     <form method="POST" action="<?= BASE_URL ?>/empresa_acao.php" style="display:inline">
                         <input type="hidden" name="acao" value="ativar">
-                        <input type="hidden" name="id" value="<?= $e['id'] ?>">
+                        <input type="hidden" name="id" value="<?= $e['id'] ?? 0 ?>">
                         <button type="submit" class="btn btn-pequeno btn-verde">Ativar</button>
                     </form>
                 <?php else: ?>
