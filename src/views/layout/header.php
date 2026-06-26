@@ -21,6 +21,7 @@ foreach ($empresas as $e) {
     <title><?= htmlspecialchars($titulo) ?> — <?= APP_NAME ?></title>
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/style.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/forms.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/acoes.css">
 </head>
 <body>
 <header class="topbar">
