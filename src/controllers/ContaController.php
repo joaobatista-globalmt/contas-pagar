@@ -90,7 +90,25 @@ class ContaController {
             WHERE cp.id = ? AND cp.empresa_id = ?
         ");
         $stmt->execute([$id, $empresaId]);
-        return $stmt->fetch() ?: null;
+        $conta = $stmt->fetch();
+        if (!$conta) return null;
+
+        // Se for pai de parcelamento, carrega filhas
+        if ($conta['eh_parcelada'] && !$conta['conta_pai_id']) {
+            $stmtFilhas = $pdo->prepare("
+                SELECT cp.*,
+                       DATEDIFF(CURDATE(), cp.data_vencimento) AS dias_vencidos
+                FROM contas_pagar cp
+                WHERE cp.conta_pai_id = ? AND cp.empresa_id = ?
+                ORDER BY cp.parcela_numero ASC
+            ");
+            $stmtFilhas->execute([$id, $empresaId]);
+            $conta['parcelas'] = $stmtFilhas->fetchAll();
+            // Recalcula valor total somando filhas
+            $conta['valor'] = array_sum(array_column($conta['parcelas'], 'valor'));
+        }
+
+        return $conta;
     }
 
     public static function criar(array $dados): array {
@@ -99,31 +117,116 @@ class ContaController {
         $erros = self::validar($dados);
         if ($erros) return ['ok' => false, 'erros' => $erros];
 
-        $pdo = db();
-        $stmt = $pdo->prepare("
-            INSERT INTO contas_pagar (
-                empresa_id, fornecedor_id, categoria_id, descricao, numero_documento,
-                valor, data_emissao, data_vencimento, forma_pagamento, observacoes,
-                status, created_by
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDENTE', ?)
-        ");
-        $stmt->execute([
-            $empresaId,
-            !empty($dados['fornecedor_id']) ? (int)$dados['fornecedor_id'] : null,
-            !empty($dados['categoria_id']) ? (int)$dados['categoria_id'] : null,
-            trim($dados['descricao']),
-            trim($dados['numero_documento'] ?? '') ?: null,
-            self::valorParaDecimal($dados['valor']),
-            !empty($dados['data_emissao']) ? $dados['data_emissao'] : null,
-            $dados['data_vencimento'],
-            !empty($dados['forma_pagamento']) ? $dados['forma_pagamento'] : null,
-            trim($dados['observacoes'] ?? '') ?: null,
-            Auth::user()['id'],
-        ]);
+        $totalParcelas = max(1, (int)($dados['total_parcelas'] ?? 1));
+        $valorTotal = self::valorParaDecimal($dados['valor']);
+        $valorParcela = round($valorTotal / $totalParcelas, 2);
+        // Ajuste: primeira parcela absorve a diferença de arredondamento
+        $diff = $valorTotal - ($valorParcela * $totalParcelas);
+        $dataVencimento = $dados['data_vencimento'];
 
-        $id = (int)$pdo->lastInsertId();
-        self::log('CRIAR_CONTA', "Conta #$id - " . trim($dados['descricao']));
-        return ['ok' => true, 'id' => $id];
+        $pdo = db();
+        $pdo->beginTransaction();
+
+        try {
+            if ($totalParcelas === 1) {
+                // Conta simples
+                $stmt = $pdo->prepare("
+                    INSERT INTO contas_pagar (
+                        empresa_id, fornecedor_id, categoria_id, descricao, numero_documento,
+                        valor, data_emissao, data_vencimento, forma_pagamento, observacoes,
+                        status, created_by, eh_parcelada, conta_pai_id, parcela_numero, parcela_total
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDENTE', ?, 0, NULL, NULL, NULL)
+                ");
+                $stmt->execute([
+                    $empresaId,
+                    !empty($dados['fornecedor_id']) ? (int)$dados['fornecedor_id'] : null,
+                    !empty($dados['categoria_id']) ? (int)$dados['categoria_id'] : null,
+                    trim($dados['descricao']),
+                    trim($dados['numero_documento'] ?? '') ?: null,
+                    $valorTotal,
+                    !empty($dados['data_emissao']) ? $dados['data_emissao'] : null,
+                    $dataVencimento,
+                    !empty($dados['forma_pagamento']) ? $dados['forma_pagamento'] : null,
+                    trim($dados['observacoes'] ?? '') ?: null,
+                    Auth::user()['id'],
+                ]);
+                $id = (int)$pdo->lastInsertId();
+                self::log('CRIAR_CONTA', "Conta #$id - " . trim($dados['descricao']));
+            } else {
+                // Conta parcelada
+                // Cria a "conta pai" (cabeçalho) com valor zerado e status CANCELADA
+                // (ela só serve para agrupar visualmente; as filhas é que são as parcelas reais)
+                $stmtPai = $pdo->prepare("
+                    INSERT INTO contas_pagar (
+                        empresa_id, fornecedor_id, categoria_id, descricao, numero_documento,
+                        valor, data_emissao, data_vencimento, forma_pagamento, observacoes,
+                        status, created_by, eh_parcelada, conta_pai_id, parcela_numero, parcela_total
+                    ) VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, 'CANCELADA', ?, 1, NULL, NULL, ?)
+                ");
+                $stmtPai->execute([
+                    $empresaId,
+                    !empty($dados['fornecedor_id']) ? (int)$dados['fornecedor_id'] : null,
+                    !empty($dados['categoria_id']) ? (int)$dados['categoria_id'] : null,
+                    trim($dados['descricao']) . " ($totalParcelas x)",
+                    trim($dados['numero_documento'] ?? '') ?: null,
+                    !empty($dados['data_emissao']) ? $dados['data_emissao'] : null,
+                    $dataVencimento,
+                    !empty($dados['forma_pagamento']) ? $dados['forma_pagamento'] : null,
+                    trim($dados['observacoes'] ?? '') ?: null,
+                    Auth::user()['id'],
+                    $totalParcelas,
+                ]);
+                $paiId = (int)$pdo->lastInsertId();
+
+                // Cria as N filhas
+                $stmtFilha = $pdo->prepare("
+                    INSERT INTO contas_pagar (
+                        empresa_id, fornecedor_id, categoria_id, descricao, numero_documento,
+                        valor, data_emissao, data_vencimento, forma_pagamento, observacoes,
+                        status, created_by, eh_parcelada, conta_pai_id, parcela_numero, parcela_total
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDENTE', ?, 1, ?, ?, ?)
+                ");
+
+                $dt = new DateTime($dataVencimento);
+                $descBase = trim($dados['descricao']);
+
+                for ($i = 1; $i <= $totalParcelas; $i++) {
+                    // Primeira parcela: valorParcela + diff (pra fechar o total)
+                    $valor = ($i === 1) ? $valorParcela + $diff : $valorParcela;
+                    $vencimento = $dt->format('Y-m-d');
+                    $descParcela = "$descBase (parcela $i/$totalParcelas)";
+
+                    $stmtFilha->execute([
+                        $empresaId,
+                        !empty($dados['fornecedor_id']) ? (int)$dados['fornecedor_id'] : null,
+                        !empty($dados['categoria_id']) ? (int)$dados['categoria_id'] : null,
+                        $descParcela,
+                        trim($dados['numero_documento'] ?? '') ?: null,
+                        $valor,
+                        !empty($dados['data_emissao']) ? $dados['data_emissao'] : null,
+                        $vencimento,
+                        !empty($dados['forma_pagamento']) ? $dados['forma_pagamento'] : null,
+                        trim($dados['observacoes'] ?? '') ?: null,
+                        Auth::user()['id'],
+                        $paiId,
+                        $i,
+                        $totalParcelas,
+                    ]);
+
+                    // Proxima parcela: +1 mes
+                    $dt->modify('+1 month');
+                }
+
+                $id = $paiId; // retorna ID do pai (pra redirecionar pra visualizacao agrupada)
+                self::log('CRIAR_CONTA_PARCELADA', "Conta #$paiId - $descBase ($totalParcelas parcelas)");
+            }
+
+            $pdo->commit();
+            return ['ok' => true, 'id' => $id];
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            return ['ok' => false, 'erros' => ['Erro ao criar conta: ' . $e->getMessage()]];
+        }
     }
 
     public static function atualizar(int $id, array $dados): array {
@@ -134,6 +237,7 @@ class ContaController {
         if (!$conta) return ['ok' => false, 'erros' => ['Conta não encontrada']];
         if ($conta['status'] === 'PAGA') return ['ok' => false, 'erros' => ['Conta já paga não pode ser editada']];
         if ($conta['status'] === 'CANCELADA') return ['ok' => false, 'erros' => ['Conta cancelada não pode ser editada']];
+        if ($conta['eh_parcelada'] && !$conta['conta_pai_id']) return ['ok' => false, 'erros' => ['Conta parcelada: edite cada parcela individualmente']];
 
         $erros = self::validar($dados);
         if ($erros) return ['ok' => false, 'erros' => $erros];
@@ -210,6 +314,7 @@ class ContaController {
         $conta = self::obter($id);
         if (!$conta) return ['ok' => false, 'erros' => ['Conta não encontrada']];
         if ($conta['status'] === 'PAGA') return ['ok' => false, 'erros' => ['Conta já paga não pode ser cancelada']];
+        if ($conta['eh_parcelada'] && !$conta['conta_pai_id']) return ['ok' => false, 'erros' => ['Conta parcelada pai não pode ser cancelada. Cancele as filhas individualmente.']];
 
         $pdo = db();
         $stmt = $pdo->prepare("UPDATE contas_pagar SET status = 'CANCELADA' WHERE id = ? AND empresa_id = ?");
@@ -245,6 +350,10 @@ class ContaController {
 
         $forma = $dados['forma_pagamento'] ?? '';
         if ($forma && !in_array($forma, FORMAS_PAGAMENTO)) $erros[] = 'Forma de pagamento inválida';
+
+        $totalParcelas = (int)($dados['total_parcelas'] ?? 1);
+        if ($totalParcelas < 1) $erros[] = 'Número de parcelas deve ser pelo menos 1';
+        if ($totalParcelas > 360) $erros[] = 'Número de parcelas máximo é 360';
 
         return $erros;
     }

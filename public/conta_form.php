@@ -91,12 +91,14 @@ function brl_input($v) {
     </div>
 
     <div class="form-linha">
-        <label>Valor *
+        <label>Valor Total *
             <input type="text" name="valor" required value="<?= brl_input($conta['valor'] ?? '') ?>"
                    placeholder="R$ 0,00" oninput="maskMoney(this)">
         </label>
-        <label>Data de Emissão
-            <input type="date" name="data_emissao" value="<?= htmlspecialchars($conta['data_emissao'] ?? '') ?>">
+        <label>Número de Parcelas
+            <input type="number" name="total_parcelas" min="1" max="360" value="1"
+                   onchange="atualizarLabelValor(this)">
+            <small class="muted">Parcelas mensais (1 = à vista)</small>
         </label>
         <label>Data de Vencimento *
             <input type="date" name="data_vencimento" required value="<?= htmlspecialchars($conta['data_vencimento'] ?? '') ?>">
@@ -123,5 +125,18 @@ function brl_input($v) {
         <button type="submit" class="btn btn-primario">Salvar (status: PENDENTE)</button>
     </div>
 </form>
+
+<script>
+function atualizarLabelValor(input) {
+    const label = input.closest('label').previousElementSibling;
+    const span = label.querySelector('label') || label;
+    const n = parseInt(input.value) || 1;
+    if (n > 1) {
+        span.firstChild.textContent = 'Valor Total (' + n + 'x) *';
+    } else {
+        span.firstChild.textContent = 'Valor *';
+    }
+}
+</script>
 
 <?php require_once __DIR__ . '/../src/views/layout/footer.php'; ?>

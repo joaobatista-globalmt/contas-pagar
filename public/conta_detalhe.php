@@ -48,6 +48,54 @@ function statusBadge($s) {
     <?php unset($_SESSION['flash']); ?>
 <?php endif; ?>
 
+<?php if (!empty($conta['parcelas'])): ?>
+<section class="conta-parcelas">
+    <h2>📊 Parcelas (<?= count($conta['parcelas']) ?>)</h2>
+    <table class="tabela">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Vencimento</th>
+                <th>Valor</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($conta['parcelas'] as $p): ?>
+                <tr>
+                    <td><strong><?= $p['parcela_numero'] ?>/<?= $p['parcela_total'] ?></strong></td>
+                    <td>
+                        <?= date('d/m/Y', strtotime($p['data_vencimento'])) ?>
+                        <?php if ($p['status'] !== 'PAGA' && $p['status'] !== 'CANCELADA' && $p['dias_vencidos'] > 0): ?>
+                            <br><span class="badge badge-vermelho">+<?= $p['dias_vencidos'] ?> dia(s)</span>
+                        <?php endif; ?>
+                    </td>
+                    <td class="td-valor"><?= brl($p['valor']) ?>
+                        <?php if ($p['valor_pago']): ?>
+                            <br><small class="muted">Pago: <?= brl($p['valor_pago']) ?></small>
+                        <?php endif; ?>
+                    </td>
+                    <td><?= statusBadge($p['status']) ?>
+                        <?php if ($p['data_pagamento']): ?>
+                            <br><small class="muted"><?= date('d/m/Y', strtotime($p['data_pagamento'])) ?></small>
+                        <?php endif; ?>
+                    </td>
+                    <td><a href="<?= BASE_URL ?>/conta_detalhe.php?id=<?= $p['id'] ?>" class="btn btn-pequeno">Ver</a></td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="2" style="text-align:right;font-weight:bold">Total:</td>
+                <td class="td-valor" style="font-weight:bold"><?= brl($conta['valor']) ?></td>
+                <td colspan="2"></td>
+            </tr>
+        </tfoot>
+    </table>
+</section>
+<?php endif; ?>
+
 <div class="conta-grid">
     <section class="conta-info">
         <h2>Informações</h2>
