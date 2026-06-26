@@ -105,6 +105,18 @@ require_once __DIR__ . '/../src/views/layout/header.php';
     </div>
 </form>
 
+<?php
+// Botoes de exportacao
+$exportParams = $_GET;
+unset($exportParams['PHPSESSID']);
+$csvUrl = BASE_URL . '/exportar.php?' . http_build_query(array_merge($exportParams, ['formato' => 'csv']));
+$pdfUrl = BASE_URL . '/exportar.php?' . http_build_query(array_merge($exportParams, ['formato' => 'pdf']));
+?>
+<div class="botoes-exportar">
+    <a href="<?= htmlspecialchars($csvUrl) ?>" class="btn btn-verde" target="_blank">📥 Baixar CSV</a>
+    <a href="<?= htmlspecialchars($pdfUrl) ?>" class="btn btn-vermelho" target="_blank">📄 Baixar PDF</a>
+</div>
+
 <h2><?= htmlspecialchars($titulo) ?></h2>
 
 <?php if ($tipo === 'periodo'): ?>

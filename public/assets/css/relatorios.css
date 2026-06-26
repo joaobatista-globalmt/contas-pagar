@@ -19,3 +19,19 @@
 .barra-fill-verde  { background: #27ae60; }
 .barra-fill-amarelo{ background: #f1c40f; }
 .barra-fill-vermelho{ background: #e74c3c; }
+
+/* === Botoes de exportacao === */
+.botoes-exportar {
+    margin-bottom: 16px;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    padding: 12px 16px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px dashed #bdc3c7;
+}
+
+.botoes-exportar .btn {
+    text-decoration: none;
+}
