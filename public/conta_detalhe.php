@@ -5,6 +5,7 @@ require_once __DIR__ . '/../src/config/app.php';
 require_once __DIR__ . '/../src/config/database.php';
 require_once __DIR__ . '/../src/lib/Auth.php';
 require_once __DIR__ . '/../src/lib/Permissao.php';
+require_once __DIR__ . '/../src/lib/Uploader.php';
 require_once __DIR__ . '/../src/controllers/ContaController.php';
 
 Auth::require();
@@ -192,8 +193,48 @@ function statusBadge($s) {
 
     <section class="conta-anexos">
         <h2>📎 Anexos</h2>
-        <p class="muted">Em breve: upload de PDFs da NF.</p>
-        <p class="muted">(Fase 10 do projeto)</p>
+
+        <?php
+        $anexos = Uploader::listarPorConta($conta['id']);
+        if (Permissao::pode('anexar_arquivo')): ?>
+            <form method="POST" action="<?= BASE_URL ?>/anexo_upload.php" enctype="multipart/form-data" class="form-upload">
+                <input type="hidden" name="conta_id" value="<?= $conta['id'] ?>">
+                <label class="label-upload">
+                    <input type="file" name="arquivo" accept="application/pdf" required>
+                    <small class="muted">PDF até 10 MB</small>
+                </label>
+                <button type="submit" class="btn btn-primario">📤 Enviar PDF</button>
+            </form>
+        <?php endif; ?>
+
+        <?php if (empty($anexos)): ?>
+            <p class="vazio">Nenhum anexo enviado.</p>
+        <?php else: ?>
+            <table class="tabela-anexos">
+                <thead><tr><th>Arquivo</th><th>Tamanho</th><th>Enviado por</th><th>Data</th><th>Ações</th></tr></thead>
+                <tbody>
+                <?php foreach ($anexos as $a): ?>
+                    <tr>
+                        <td><a href="<?= BASE_URL ?>/anexo_download.php?id=<?= $a['id'] ?>" target="_blank">📄 <?= htmlspecialchars($a['nome_arquivo']) ?></a></td>
+                        <td><?= Uploader::formatTamanho($a['tamanho_bytes']) ?></td>
+                        <td><?= htmlspecialchars($a['uploaded_by_nome'] ?? '-') ?></td>
+                        <td><?= date('d/m/Y H:i', strtotime($a['uploaded_at'])) ?></td>
+                        <td>
+                            <a href="<?= BASE_URL ?>/anexo_download.php?id=<?= $a['id'] ?>" target="_blank" class="btn btn-pequeno">Ver</a>
+                            <?php if (Permissao::pode('anexar_arquivo')): ?>
+                                <form method="POST" action="<?= BASE_URL ?>/anexo_excluir.php" style="display:inline"
+                                      onsubmit="return confirm('Excluir este anexo?')">
+                                    <input type="hidden" name="id" value="<?= $a['id'] ?>">
+                                    <input type="hidden" name="conta_id" value="<?= $conta['id'] ?>">
+                                    <button type="submit" class="btn btn-pequeno btn-vermelho">🗑️</button>
+                                </form>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
     </section>
 </div>
 

@@ -25,6 +25,7 @@ foreach ($empresas as $e) {
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/contas.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/recorrencia.css">
     <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/relatorios.css">
+    <link rel="stylesheet" href="<?= BASE_URL ?>/assets/css/anexos.css">
 </head>
 <body>
 <header class="topbar">

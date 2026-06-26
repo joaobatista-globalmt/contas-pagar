@@ -45,6 +45,10 @@ class Permissao {
             case 'anexar_arquivo':
                 return in_array($perfil, ['admin', 'operador', 'aprovador', 'pagador']);
 
+            case 'excluir_anexo':
+                // Apenas admin ou quem fez upload (checado no controller)
+                return in_array($perfil, ['admin', 'operador', 'aprovador', 'pagador']);
+
             default:
                 return false;
         }
